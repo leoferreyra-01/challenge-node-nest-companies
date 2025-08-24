@@ -31,20 +31,12 @@ export class FindCompaniesWithTransactionsLastMonthUseCase
   ) {}
 
   async execute(): Promise<FindCompaniesWithTransactionsLastMonthResponse> {
-    // Calculate last month's date range
-    const now = new Date();
-    const startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const endDate = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      0,
-      23,
-      59,
-      59,
-      999,
-    );
+    // Calculate last 30 days (rolling window)
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 30);
 
-    // Get company IDs that had transactions in the last month
+    // Get company IDs that had transactions in the last 30 days
     const companyIds =
       await this.transactionRepository.findCompaniesWithTransactionsInLastMonth();
 

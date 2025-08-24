@@ -84,6 +84,15 @@ export class CompanyRepository implements ICompanyRepository {
     );
   }
 
+  async findCompaniesCreatedInLastMonth(): Promise<Company[]> {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    return Array.from(this.companies.values()).filter(
+      (company) => company.createdAt >= thirtyDaysAgo,
+    );
+  }
+
   async findByType(type: CompanyType): Promise<Company[]> {
     return Array.from(this.companies.values()).filter(
       (company) => company.type === type,

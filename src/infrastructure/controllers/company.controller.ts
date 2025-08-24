@@ -17,6 +17,7 @@ import {
 import { CreateCompanyUseCase } from '../../application/use-cases/company/create-company.use-case';
 import { GetCompanyUseCase } from '../../application/use-cases/company/get-company.use-case';
 import { FindCompaniesWithTransactionsLastMonthUseCase } from '../../application/use-cases/company/find-companies-with-transactions-last-month.use-case';
+import { FindCompaniesCreatedLastMonthUseCase } from '../../application/use-cases/company/find-companies-created-last-month.use-case';
 import { CreateCompanyDto } from '../../shared/dto/create-company.dto';
 import {
   CreateCompanyResponseDto,
@@ -32,6 +33,7 @@ export class CompanyController {
     private readonly createCompanyUseCase: CreateCompanyUseCase,
     private readonly getCompanyUseCase: GetCompanyUseCase,
     private readonly findCompaniesWithTransactionsLastMonthUseCase: FindCompaniesWithTransactionsLastMonthUseCase,
+    private readonly findCompaniesCreatedLastMonthUseCase: FindCompaniesCreatedLastMonthUseCase,
   ) {}
 
   @Post()
@@ -139,6 +141,43 @@ export class CompanyController {
         },
         message:
           'Companies with transactions in last month retrieved successfully',
+      };
+    } catch (error) {
+      throw new HttpException(
+        {
+          success: false,
+          message: error.message,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('created/last-month')
+  @ApiOperation({
+    summary: 'Get companies created in the last month',
+    description:
+      'Retrieves all companies that were created in the last 30 days',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Companies created in last month retrieved successfully',
+    type: CompaniesWithTransactionsLastMonthResponseDto,
+  })
+  async getCompaniesCreatedLastMonth() {
+    try {
+      const result = await this.findCompaniesCreatedLastMonthUseCase.execute();
+      return {
+        success: true,
+        data: {
+          companies: result.companies.map((company) => company.toJSON()),
+          totalCount: result.totalCount,
+          lastMonth: {
+            startDate: result.lastMonth.startDate.toISOString(),
+            endDate: result.lastMonth.endDate.toISOString(),
+          },
+        },
+        message: 'Companies created in last month retrieved successfully',
       };
     } catch (error) {
       throw new HttpException(

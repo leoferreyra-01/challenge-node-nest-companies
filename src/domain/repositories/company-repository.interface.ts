@@ -1,4 +1,4 @@
-import { Company, CompanyType } from '../entities/company.entity';
+import { Company } from '../entities/company.entity';
 import { IRepository } from '../../shared/interfaces/repository.interface';
 
 export interface ICompanyRepository extends IRepository<Company> {
@@ -12,5 +12,5 @@ export interface ICompanyRepository extends IRepository<Company> {
     startYear: number,
     endYear: number,
   ): Promise<Company[]>;
-  findByType(type: CompanyType): Promise<Company[]>;
+  findCompaniesCreatedInLastMonth(): Promise<Company[]>;
 }
