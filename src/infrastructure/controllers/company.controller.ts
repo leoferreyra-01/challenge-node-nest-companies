@@ -13,6 +13,7 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
+  ApiSecurity,
 } from '@nestjs/swagger';
 import { CreateCompanyUseCase } from '../../application/use-cases/company/create-company.use-case';
 import { GetCompanyUseCase } from '../../application/use-cases/company/get-company.use-case';
@@ -27,6 +28,7 @@ import {
 import { CompaniesWithTransactionsLastMonthResponseDto } from '../../shared/dto/transaction-response.dto';
 
 @ApiTags('companies')
+@ApiSecurity('X-API-Key')
 @Controller('companies')
 export class CompanyController {
   constructor(
@@ -37,6 +39,7 @@ export class CompanyController {
   ) {}
 
   @Post()
+  @ApiSecurity('X-API-Key')
   @ApiOperation({
     summary: 'Create a new company',
     description: 'Creates a new company with the provided information',
@@ -75,6 +78,7 @@ export class CompanyController {
   }
 
   @Get(':id')
+  @ApiSecurity('X-API-Key')
   @ApiOperation({
     summary: 'Get company by ID',
     description: 'Retrieves a company by its unique identifier',
@@ -114,6 +118,7 @@ export class CompanyController {
   }
 
   @Get('with-transactions/last-month')
+  @ApiSecurity('X-API-Key')
   @ApiOperation({
     summary: 'Get companies with transactions in the last month',
     description:
@@ -154,6 +159,7 @@ export class CompanyController {
   }
 
   @Get('created/last-month')
+  @ApiSecurity('X-API-Key')
   @ApiOperation({
     summary: 'Get companies created in the last month',
     description:

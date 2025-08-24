@@ -5,13 +5,20 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiSecurity,
+} from '@nestjs/swagger';
 import { CreateTransactionUseCase } from '../../application/use-cases/transaction/create-transaction.use-case';
 import { CreateTransactionDto } from '../../shared/dto/create-transaction.dto';
 import { CreateTransactionResponseDto } from '../../shared/dto/transaction-response.dto';
 import { ErrorResponseDto } from '../../shared/dto/company-response.dto';
 
 @ApiTags('transactions')
+@ApiSecurity('X-API-Key')
 @Controller('transactions')
 export class TransactionController {
   constructor(
@@ -19,6 +26,7 @@ export class TransactionController {
   ) {}
 
   @Post()
+  @ApiSecurity('X-API-Key')
   @ApiOperation({
     summary: 'Create a new transaction',
     description: 'Creates a new transaction for a company',

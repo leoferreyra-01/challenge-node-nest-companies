@@ -19,26 +19,38 @@ async function bootstrap() {
         type: 'apiKey',
         name: 'X-API-Key',
         in: 'header',
-        description: 'API key for authentication',
+        description: 'API key for authentication - Required for all endpoints',
       },
       'X-API-Key',
-    )
-    .addBearerAuth(
-      {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'API Key',
-        description: 'Enter your API key',
-      },
-      'Bearer',
     )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
+
+  // Add global security requirement to all endpoints
+  document.security = [{ 'X-API-Key': [] }];
+
+  if (document.paths) {
+    Object.keys(document.paths).forEach((path) => {
+      Object.keys(document.paths[path]).forEach((method) => {
+        if (document.paths[path][method]) {
+          // Set security requirement without duplicates
+          document.paths[path][method].security = [{ 'X-API-Key': [] }];
+        }
+      });
+    });
+  }
+
   SwaggerModule.setup('api', app, document, {
     swaggerOptions: {
       persistAuthorization: true,
+      docExpansion: 'list',
     },
+    customSiteTitle: 'Companies API Documentation',
+    customCss: `
+      .swagger-ui .topbar { display: none }
+      .swagger-ui .info .title { font-size: 2.5em; }
+    `,
   });
 
   await app.listen(3000);
