@@ -1,0 +1,164 @@
+service: company-registration-lambda
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+  environment:
+    NODE_ENV: ${self:provider.stage}
+    API_ENDPOINT: ${ssm:/company-api/${self:provider.stage}/endpoint}
+    API_KEY: ${ssm:/company-api/${self:provider.stage}/api-key}
+  
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+          Resource: arn:aws:logs:*:*:*
+        - Effect: Allow
+          Action:
+            - ssm:GetParameter
+            - ssm:GetParameters
+          Resource: 
+            - arn:aws:ssm:${self:provider.region}:${aws:accountId}:parameter/company-api/*
+        - Effect: Allow
+          Action:
+            - dynamodb:PutItem
+            - dynamodb:GetItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+            - dynamodb:Query
+            - dynamodb:Scan
+          Resource: 
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/companies-${self:provider.stage}
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/companies-${self:provider.stage}/index/*
+
+functions:
+  companyRegistration:
+    handler: dist/company-registration-lambda.handler
+    events:
+      - http:
+          path: /companies
+          method: post
+          cors: true
+          request:
+            schemas:
+              application/json:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    minLength: 1
+                    maxLength: 100
+                  description:
+                    type: string
+                    maxLength: 500
+                  industry:
+                    type: string
+                    minLength: 1
+                  foundedYear:
+                    type: integer
+                    minimum: 1800
+                    maximum: 2025
+                  employeeCount:
+                    type: integer
+                    minimum: 0
+                  isActive:
+                    type: boolean
+                  type:
+                    type: string
+                    enum: [PYME, CORPORATE]
+                required:
+                  - name
+                  - industry
+                  - foundedYear
+                  - employeeCount
+                  - isActive
+                  - type
+      - schedule:
+          rate: rate(1 day)
+          description: Daily cleanup of old request logs
+          enabled: false # Disabled by default, enable for production
+
+  corsHandler:
+    handler: dist/company-registration-lambda.corsHandler
+    events:
+      - http:
+          path: /companies
+          method: options
+          cors: true
+
+resources:
+  Resources:
+    CompaniesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: companies-${self:provider.stage}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: name
+            AttributeType: S
+          - AttributeName: type
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: NameIndex
+            KeySchema:
+              - AttributeName: name
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: TypeIndex
+            KeySchema:
+              - AttributeName: type
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+
+    CompanyRegistrationLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: /aws/lambda/company-registration-lambda-${self:provider.stage}
+        RetentionInDays: 30
+
+  Outputs:
+    CompanyRegistrationFunction:
+      Description: "Company Registration Lambda Function ARN"
+      Value: !GetAtt CompanyRegistrationFunction.Arn
+      Export:
+        Name: ${self:service}-${self:provider.stage}-CompanyRegistrationFunction
+    
+    CompaniesTableName:
+      Description: "Companies DynamoDB Table Name"
+      Value: !Ref CompaniesTable
+      Export:
+        Name: ${self:service}-${self:provider.stage}-CompaniesTable
+
+plugins:
+  - serverless-webpack
+  - serverless-offline
+
+custom:
+  webpack:
+    webpackConfig: webpack.config.js
+    includeModules: true
+    packager: 'npm'
+  
+  serverless-offline:
+    httpPort: 3001
+    lambdaPort: 3002
+    noPrependStageInUrl: true 
