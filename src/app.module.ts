@@ -8,11 +8,7 @@ import { ConfigModule } from './infrastructure/config/config.module';
 import { ApiKeyGuard } from './infrastructure/guards/api-key.guard';
 
 @Module({
-  imports: [
-    ConfigModule,
-    ApplicationModule,
-    InfrastructureModule,
-  ],
+  imports: [ConfigModule, ApplicationModule, InfrastructureModule],
   controllers: [CompanyController, TransactionController],
   providers: [
     {
