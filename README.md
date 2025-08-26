@@ -77,6 +77,23 @@ npm install
 
 ### **2. Environment Configuration**
 Create a `.env` file in the root directory:
+You can copy the .env.example one by:
+```bash
+cp .env.example .env
+```
+Or you can just create it by:
+```bash
+touch .env
+```
+or
+```bash
+nano .env
+```
+or
+```bash
+vim .env
+```
+And fill the file with the following variables:
 ```env
 # API Configuration
 API_KEY=secured_apy_key_2025
